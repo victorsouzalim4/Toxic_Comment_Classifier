@@ -1,61 +1,26 @@
-import unicodedata
-import re
+from aux_functions import *
+import nltk
+from nltk.corpus import stopwords
 
-CONTRACTIONS = {
-    r"\bcan't\b": "cannot",
-    r"\bwon't\b": "will not",
-    r"\bdon't\b": "do not",
-    r"\bdoesn't\b": "does not",
-    r"\bdidn't\b": "did not",
-    r"\bi'm\b": "i am",
-    r"\bit's\b": "it is",
-    r"\bhe's\b": "he is",
-    r"\bshe's\b": "she is",
-    r"\byou're\b": "you are",
-    r"\bthey're\b": "they are",
-    r"\bwe're\b": "we are",
-    r"\blet's\b": "let us",
-    r"\bcouldn't\b": "could not",
-    r"\bshouldn't\b": "should not",
-    r"\bwouldn't\b": "would not",
-}
+nltk.download('stopwords')
 
 def treat_comment(comment: str):
-    # print(comment)
+    tokens = parsing(comment)
+    tokens = remove_stop_words(tokens)
+
+    return tokens
+
+def parsing(comment: str):
     comment = comment.lower()
     comment = normalize_contractions(comment)
     comment = remove_noise(comment)
     comment = normalize_text(comment)
     tokens = comment.split()
+
     return tokens
 
-def normalize_text(comment: str):
-    
-    comment = ''.join(
-        c for c in unicodedata.normalize('NFKD', comment)
-        if not unicodedata.combining(c)
-    )
+def remove_stop_words(tokens: list=[]):
+    stop_words = set(stopwords.words('english'))
 
-    comment = re.sub(r'[^a-zA-Z0-9 ]+', ' ', comment) # remove caracteres especiais
-    comment = re.sub(r'\s+', ' ', comment).strip()  # remove sequencia de espaços
- 
-    return comment
+    return [t for t in tokens if t not in stop_words]
 
-def remove_noise(comment: str):     
-    comment = re.sub(r'http[s]?://\S+', ' ', comment)
-    comment = re.sub(r'www\.\S+', ' ', comment)
-    
-    # 3) remover tags HTML
-    comment = re.sub(r'<[^>]+>', ' ', comment)
-    
-    # 4) remover menções e hashtags (@user, #tag)
-    comment = re.sub(r'[@#][^\s]+', ' ', comment)
-
-    return comment
-
-
-def normalize_contractions(comment):
-
-    for pattern, replacement in CONTRACTIONS.items():
-        comment = re.sub(pattern, replacement, comment)
-    return comment
